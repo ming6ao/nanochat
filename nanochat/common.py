@@ -180,6 +180,18 @@ def compute_init(device_type="cuda"): # cuda|cpu|mps
     if device_type == "mps":
         assert torch.backends.mps.is_available(), "Your PyTorch installation is not configured for MPS but device_type is 'mps'"
 
+    if device_type == "cuda":
+        # WSL/pre-Ampere workaround: the dtype autodetect above queries the device
+        # capability on a fresh CUDA context, which on some driver stacks (e.g. WSL2
+        # with driver 536.99 on a Pascal GPU) leaves a stale cudaErrorNotSupported.
+        # The next tracked CUDA call then raises it. Prime the context and flush any
+        # such pending error here, before any real allocation happens.
+        torch.cuda.init()
+        try:
+            torch.cuda.synchronize()
+        except RuntimeError:
+            pass
+
     # Reproducibility
     # Note that we set the global seeds here, but most of the code uses explicit rng objects.
     # The only place where global rng might be used is nn.Module initialization of the model weights.
