@@ -277,6 +277,8 @@ def get_peak_flops(device_name: str) -> float:
         (["5090"], 209.5e12),
         (["4090"], 165.2e12),
         (["3090"], 71e12),
+        # Pascal (no tensor cores; value is the FP32 CUDA-core peak)
+        (["1080 ti"], 11.34e12),
     )
     for patterns, flops in _PEAK_FLOPS_TABLE:
         if all(p in name for p in patterns):
