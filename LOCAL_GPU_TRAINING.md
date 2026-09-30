@@ -50,7 +50,7 @@ export TORCH_COMPILE_DISABLE=1 NANOCHAT_DTYPE=float32 WANDB_RUN=dummy
 
 python -m scripts.base_train \
     --depth=8 --window-pattern=L \
-    --max-seq-len=1024 --device-batch-size=8 --total-batch-size=8192 \
+    --max-seq-len=2048 --device-batch-size=4 --total-batch-size=16384 \
     --num-iterations=100 --warmup-steps=3 \
     --eval-every=-1 --core-metric-every=-1 --sample-every=-1 \
     --save-every=-1 \
@@ -78,15 +78,15 @@ cd ~/repos/nanochat && source .venv/bin/activate
 export NANOCHAT_BASE_DIR="$HOME/.cache/nanochat"
 export TORCH_COMPILE_DISABLE=1 NANOCHAT_DTYPE=float32 WANDB_RUN=dummy
 
-python -m scripts.profile_train --steps 100 --out profiles/d8_s1024 -- \
+python -m scripts.profile_train --steps 100 --out profiles/d8_s2048 -- \
     --depth=8 --window-pattern=L \
-    --max-seq-len=1024 --device-batch-size=8 --total-batch-size=8192 \
+    --max-seq-len=2048 --device-batch-size=4 --total-batch-size=16384 \
     --warmup-steps=3 \
     --eval-every=-1 --core-metric-every=-1 --sample-every=-1 \
     --save-every=-1 --run=dummy --model-tag=prof_d8
 ```
 
-Artifacts written to `profiles/d8_s1024/` (git-ignored):
+Artifacts written to `profiles/d8_s2048/` (git-ignored):
 
 | File | What it is |
 |---|---|
@@ -100,7 +100,7 @@ Artifacts written to `profiles/d8_s1024/` (git-ignored):
 Regenerate the report at any time:
 
 ```bash
-python -m scripts.profile_report --dir profiles/d8_s1024
+python -m scripts.profile_report --dir profiles/d8_s2048
 ```
 
 ### Important: CUPTI is unavailable under WSL2
@@ -136,14 +136,14 @@ Compute-optimal horizons use `--target-param-data-ratio=12` (the nanochat
 default). Let the trainer derive the horizon and batch:
 
 ```bash
-# Example: depth 8, 1024 ctx, auto batch + auto iteration count
+# Example: depth 8, 2048 ctx, auto batch + auto iteration count
 python -m scripts.base_train \
     --depth=8 --window-pattern=L \
-    --max-seq-len=1024 --device-batch-size=8 \
+    --max-seq-len=2048 --device-batch-size=4 \
     --total-batch-size=-1 --target-param-data-ratio=12 --num-iterations=-1 \
     --eval-every=-1 --core-metric-every=-1 --sample-every=-1 \
     --save-every=500 \
-    --run=dummy --model-tag=d8_s1024
+    --run=dummy --model-tag=d8_s2048
 ```
 
 | tier | depth | seq | dev batch | optimal tokens | shards (`-n`) | rough time |
@@ -165,18 +165,18 @@ cd ~/repos/nanochat && source .venv/bin/activate
 export NANOCHAT_BASE_DIR="$HOME/.cache/nanochat" TORCH_COMPILE_DISABLE=1 NANOCHAT_DTYPE=float32 WANDB_RUN=dummy
 
 # 100 steps
-python -m scripts.base_train --depth=8 --window-pattern=L --max-seq-len=1024 \
-    --device-batch-size=8 --total-batch-size=8192 --num-iterations=100 --warmup-steps=3 \
+python -m scripts.base_train --depth=8 --window-pattern=L --max-seq-len=2048 \
+    --device-batch-size=4 --total-batch-size=16384 --num-iterations=100 --warmup-steps=3 \
     --eval-every=-1 --core-metric-every=-1 --sample-every=-1 --save-every=-1 \
     --run=dummy --model-tag=demo100
 
 # profile 100 steps + report
-python -m scripts.profile_train --steps 100 --out profiles/d8_s1024 -- \
-    --depth=8 --window-pattern=L --max-seq-len=1024 --device-batch-size=8 \
-    --total-batch-size=8192 --warmup-steps=3 \
+python -m scripts.profile_train --steps 100 --out profiles/d8_s2048 -- \
+    --depth=8 --window-pattern=L --max-seq-len=2048 --device-batch-size=4 \
+    --total-batch-size=16384 --warmup-steps=3 \
     --eval-every=-1 --core-metric-every=-1 --sample-every=-1 \
     --save-every=-1 --run=dummy --model-tag=prof_d8
 
 # regenerate a report
-python -m scripts.profile_report --dir profiles/d8_s1024
+python -m scripts.profile_report --dir profiles/d8_s2048
 ```
