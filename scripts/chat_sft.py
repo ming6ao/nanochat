@@ -206,12 +206,15 @@ def sft_data_generator_bos_bestfit(split, buffer_size=100):
         while len(conv_buffer) < buffer_size:
             conversation = dataset[cursor]
             ids, mask = tokenizer.render_conversation(conversation)
-            conv_buffer.append((ids, mask))
             cursor += ddp_world_size
             if cursor >= dataset_size:
                 cursor = cursor % dataset_size
                 epoch += 1
                 # Note: last_step is now triggered based on consumption, not fetching
+            # skip conversations too long to ever fit a row (they'd stall the packer)
+            if len(ids) > row_capacity:
+                continue
+            conv_buffer.append((ids, mask))
 
     while True:
         rows = []
