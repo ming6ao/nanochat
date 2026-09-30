@@ -100,6 +100,7 @@ def tokenizing_distributed_data_loader_with_state_bos_bestfit(
     bos_token = tokenizer.get_bos_token_id()
     doc_buffer = []
     pq_idx, rg_idx, epoch = 0, 0, 1
+    docs_consumed = 0  # documents fully or partially placed into rows (for data-budget accounting)
 
     def refill_buffer():
         nonlocal pq_idx, rg_idx, epoch
@@ -143,18 +144,20 @@ def tokenizing_distributed_data_loader_with_state_bos_bestfit(
                     doc_len = len(doc)
                     row_buffer[row_idx, pos:pos + doc_len] = torch.tensor(doc, dtype=torch.long)
                     pos += doc_len
+                    docs_consumed += 1
                 else:
                     # No doc fits - crop shortest in buffer to fill remaining and minimize waste
                     shortest_idx = min(range(len(doc_buffer)), key=lambda i: len(doc_buffer[i]))
                     doc = doc_buffer.pop(shortest_idx)
                     row_buffer[row_idx, pos:pos + remaining] = torch.tensor(doc[:remaining], dtype=torch.long)
                     pos += remaining
+                    docs_consumed += 1
 
         # Copy to pinned CPU buffer, then single HtoD transfer
         cpu_inputs.copy_(row_buffer[:, :-1])
         cpu_targets.copy_(row_buffer[:, 1:])
 
-        state_dict = {"pq_idx": pq_idx, "rg_idx": rg_idx, "epoch": epoch}
+        state_dict = {"pq_idx": pq_idx, "rg_idx": rg_idx, "epoch": epoch, "docs_consumed": docs_consumed}
 
         # Single HtoD copy into persistent GPU buffer and yield
         gpu_buffer.copy_(cpu_buffer, non_blocking=use_cuda)
