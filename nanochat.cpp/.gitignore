@@ -1,4 +1,0 @@
-# Bazel convenience symlinks and output directory.
-/bazel-*
-# Makefile fallback build directory.
-/build/
